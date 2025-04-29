@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Abhishek Cricket Streaming</title>
+  <title>AbhiShek Cricket Streaming</title>
   <style>
     body {
       background-color: black;
@@ -53,6 +53,7 @@
       font-weight: bold;
       margin: 20px 0;
       text-align: center;
+      color: white;
     }
     #streaming-container {
       width: 100%;
@@ -64,13 +65,13 @@
       width: 100%;
       height: auto;
       border: 1px solid white;
+      cursor: pointer;
     }
     #quality-selector {
       margin: 10px 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
     }
     #quality-selector select {
       padding: 5px;
@@ -79,6 +80,7 @@
       background-color: black;
       color: white;
       font-size: 16px;
+      margin-right: 10px;
     }
     #telegram-button {
       padding: 10px 20px;
@@ -103,9 +105,9 @@
 <div id="header">Abhishek Cricket Streaming</div>
 
 <div id="streaming-container">
-  <video id="videoPlayer" controls></video>
+  <video id="videoPlayer" controls playsinline></video>
   <div id="quality-selector">
-    <label for="quality">Select Quality:</label>
+    <label for="quality">Select Quality: </label>
     <select id="quality" onchange="changeQuality()">
       <option value="-1" selected>Auto</option>
     </select>
@@ -117,39 +119,32 @@
   const video = document.getElementById('videoPlayer');
   const qualitySelector = document.getElementById('quality');
   const hls = new Hls();
-
   const hlsUrl = "https://starsporthindii.pages.dev/index.m3u8";
 
-  // Load stream
-  if (Hls.isSupported()) {
-    hls.loadSource(hlsUrl);
-    hls.attachMedia(video);
+  if (hlsUrl) {
+    if (Hls.isSupported()) {
+      hls.loadSource(hlsUrl);
+      hls.attachMedia(video);
 
-    hls.on(Hls.Events.MANIFEST_PARSED, function () {
-      const levels = hls.levels;
-      levels.forEach((level, index) => {
-        const option = document.createElement('option');
-        option.value = index;
-        option.textContent = `${level.height}p`;
-        qualitySelector.appendChild(option);
+      hls.on(Hls.Events.MANIFEST_PARSED, function () {
+        const levels = hls.levels;
+        levels.forEach((level, index) => {
+          const option = document.createElement('option');
+          option.value = index;
+          option.textContent = `${level.height}p`;
+          qualitySelector.appendChild(option);
+        });
       });
-    });
 
-    hls.on(Hls.Events.ERROR, function (event, data) {
-      if (data.fatal) {
-        alert("Error loading stream. Please try again later.");
+      function changeQuality() {
+        const quality = parseInt(qualitySelector.value);
+        hls.currentLevel = quality;
       }
-    });
-
-  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    video.src = hlsUrl;
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = hlsUrl;
+    }
   } else {
-    alert("Your browser does not support this video stream.");
-  }
-
-  function changeQuality() {
-    const quality = parseInt(qualitySelector.value);
-    hls.currentLevel = quality;
+    alert("No URL provided. Please add '?url=your_hls_link.m3u8' to the URL.");
   }
 
   function joinNow() {
@@ -157,19 +152,30 @@
   }
 
   function closePopup() {
-    localStorage.setItem("popupClosed", "true");
-    document.getElementById('popup').style.display = 'none';
+    const popup = document.getElementById('popup');
+    popup.style.display = 'none';
   }
 
   function joinTelegram() {
     window.open('https://t.me/IPL_LiveScore2025', '_blank');
   }
 
-  window.onload = function () {
-    if (localStorage.getItem("popupClosed") === "true") {
-      document.getElementById('popup').style.display = 'none';
+  // Auto fullscreen + rotate to landscape on click
+  video.addEventListener('click', async () => {
+    try {
+      if (video.requestFullscreen) {
+        await video.requestFullscreen();
+      } else if (video.webkitEnterFullscreen) {
+        video.webkitEnterFullscreen(); // iOS Safari
+      }
+
+      if (screen.orientation && screen.orientation.lock) {
+        await screen.orientation.lock("landscape");
+      }
+    } catch (err) {
+      console.warn("Fullscreen or orientation lock failed:", err);
     }
-  };
+  });
 </script>
 
 </body>
